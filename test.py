@@ -1,7 +1,6 @@
 import websocket
 import thread
 import time
-import re
 import json
 import MySQLdb
 
@@ -58,10 +57,10 @@ def on_open(ws):
 
     def run(*args):
         while True:
-            time.sleep(5)
+            time.sleep(3)
             print "sending"
-
-            ws.send(json.dumps({'type': 'HB'}))
+            terminal_no = 1
+            ws.send(json.dumps({'type': 'HB', 'result': terminal_no}))
         print "thread terminating..."
     thread.start_new_thread(run, ())
 

@@ -44,17 +44,19 @@ class MonitorHandler(tornado.websocket.WebSocketHandler):
 
     def __process_message(self, json_message):
         action_type = json_message.get('type')
+        result = json_message.get('result')
         if action_type == 'HB':
+            self.tid = result
             if self.tid not in connectedClient.keys():
                 connectedClient[self.tid] = self
             print ("%s is beating" % self.tid)
-            self.__heartbeatRslt(json_message.get('result'))
+            self.__heartbeatRslt(result)
 
         elif action_type == 'InqResp':
-            self.__inquiryRslt(json_message.get('result'))
+            self.__inquiryRslt(result)
 
         elif action_type == 'UpdResp':
-            self.__updateRslt(json_message.get('result'))
+            self.__updateRslt(result)
 
     def __heartbeatRslt(self, result_msg):
         print result_msg
