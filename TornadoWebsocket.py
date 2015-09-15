@@ -33,16 +33,8 @@ class MonitorHandler(tornado.websocket.WebSocketHandler):
 
     def on_message(self, message):
         time.sleep(1)
-        decoded_msg = json.load()
-
-        self.tid = json.load(message)['']
-        if self.tid not in connectedClient.keys():
-            connectedClient[self.tid] = self
-        print ("%s is beating" % self.tid)
-
         decoded = json.load(message)
         self.process_message(decoded)
-
         print message
 
     def on_close(self):
@@ -50,21 +42,26 @@ class MonitorHandler(tornado.websocket.WebSocketHandler):
             del connectedClient[self.tid]
             print "close"
 
-    def process_message(self, json_message):
+    def __process_message(self, json_message):
         action_type = json_message.get('type')
         if action_type == 'HB':
-            self.__heartbeatRslt__(json_message.get('result'))
-        elif action_type == 'InqResp':
-            self.__inquiryRslt__(json_message.get('result'))
-        elif action_type == 'UpdResp':
-            self.__updateRslt__(json_message.get('result'))
+            if self.tid not in connectedClient.keys():
+                connectedClient[self.tid] = self
+            print ("%s is beating" % self.tid)
+            self.__heartbeatRslt(json_message.get('result'))
 
-    def __heartbeatRslt__(self, result_msg):
+        elif action_type == 'InqResp':
+            self.__inquiryRslt(json_message.get('result'))
+
+        elif action_type == 'UpdResp':
+            self.__updateRslt(json_message.get('result'))
+
+    def __heartbeatRslt(self, result_msg):
         print result_msg
         resp = json.dumps({'type': 'HB', 'command': 'Received'})
         self.write_message(resp, 0)
 
-    def __inquiryRslt__(self, result_msg):
+    def __inquiryRslt(self, result_msg):
         print result_msg
 
     def __updateRslt(self, result_msg):

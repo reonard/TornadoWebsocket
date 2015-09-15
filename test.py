@@ -60,7 +60,8 @@ def on_open(ws):
         while True:
             time.sleep(5)
             print "sending"
-            ws.send("HB1")
+
+            ws.send(json.dumps({'type': 'HB'}))
         print "thread terminating..."
     thread.start_new_thread(run, ())
 
