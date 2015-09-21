@@ -1,8 +1,20 @@
 __author__ = 'reonard'
 
-import re
 
-m = re.search(r'(.*)-:-(.*)', 'HB-:-TerminalID')
 
-if m:
-    print(m.group(2))
+
+def hellp():
+    a = "a"
+    if True:
+        try:
+            print "hellp"
+        except:
+            print "no hello"
+            return 0
+
+def hellow2():
+
+
+
+
+

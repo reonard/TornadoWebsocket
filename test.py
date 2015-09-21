@@ -7,19 +7,56 @@ import MySQLdb
 COnn = 0
 
 
-def heartbeatRes(wst, msg):
+# class inquiryHandler():
+#
+#     def __init__(self):
+#         self.connectted = 0
+#         self.mysqlcon = MySQLdb.connect()
+#         self.result = 0
+#
+#     def __exceuteSQL(self, sqlcommand):
+#
+#         if self.mysqlcon:
+#             cur = self.mysqlcon.cursor()
+#             try:
+#                 self.result = cur.execute(sqlcommand)
+#             except:
+#                 print "Error Execute"
+#                 self.result = 0
+#             finally:
+#                 return self.result
+#         else:
+#             print "Reconnecting MySQL"
+#             self.try_to_reconnect()
+#
+#
+#     def result2json(self):
+#
+#
+#
+#
+#
+#     def __opendb_connection(self):
+#         database_con = MySQLdb.connect()
+#
+#     def try_to_reconnect(self):
+#         self.__opendb_connection()
+
+
+def heartbeatRes(wst, msg, respID):
     print "HeartBeating"
     print msg
 
 
-def inquiryRes(wst, msg):
+def inquiryRes(wst, msg, respID):
     print "Inquiring"
+    # time.sleep(9)
     print msg
-    jsonResp = json.dumps({'type': 'InqResp', 'result': 'Received %s' % msg})
+    jsonResp = json.dumps({'type': 'InqResp', 'result': 'Received %s' % msg, 'respID': '%d' % respID })
     wst.send(jsonResp)
 
 
-def updateRes(wst, msg):
+def updateRes(wst, msg, respID):
     print "Updating"
     print msg
 
@@ -30,8 +67,10 @@ actionList = {'HB': heartbeatRes,
 
 def process_message(wst, json_message):
     action_type = json_message.get('type')
+    respID = 0
     if action_type in actionList.keys():
-        actionList.get(action_type)(ws, json_message.get('command'))
+        respID = json_message.get('reqID')
+        actionList.get(action_type)(ws, json_message.get('command'), respID)
 
 
 def on_message(ws, message):
@@ -57,10 +96,10 @@ def on_open(ws):
 
     def run(*args):
         while True:
-            time.sleep(3)
             print "sending"
-            terminal_no = 1
+            terminal_no = '2'
             ws.send(json.dumps({'type': 'HB', 'result': terminal_no}))
+            time.sleep(300)
         print "thread terminating..."
     thread.start_new_thread(run, ())
 
