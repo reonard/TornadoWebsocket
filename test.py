@@ -50,7 +50,7 @@ def heartbeatRes(wst, msg, respID):
 
 def inquiryRes(wst, msg, respID):
     print "Inquiring"
-    # time.sleep(9)
+    # time.sleep(1)
     print msg
     jsonResp = json.dumps({'type': 'InqResp', 'result': 'Received %s' % msg, 'respID': '%d' % respID })
     wst.send(jsonResp)
@@ -97,9 +97,9 @@ def on_open(ws):
     def run(*args):
         while True:
             print "sending"
-            terminal_no = '2'
+            terminal_no = '518000A02'
             ws.send(json.dumps({'type': 'HB', 'result': terminal_no}))
-            time.sleep(300)
+            time.sleep(10)
         print "thread terminating..."
     thread.start_new_thread(run, ())
 
@@ -110,7 +110,7 @@ if __name__ == "__main__":
 
     while True:
         if not COnn:
-            ws = websocket.WebSocketApp("ws://localhost:8081/monitor",
+            ws = websocket.WebSocketApp("ws://localhost:8082/monitor",
                                         on_message=on_message,
                                         on_error=on_error,
                                         on_close=on_close)

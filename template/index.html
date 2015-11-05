@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="http://apps.bdimg.com/libs/bootstrap/3.3.0/css/bootstrap.min.css">
+    <script src="http://apps.bdimg.com/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="http://apps.bdimg.com/libs/bootstrap/3.3.0/js/bootstrap.min.js"></script>
+
+    <title></title>
+    <style type="text/css">
+      body {
+          padding-top: 50px;
+      }
+      #live{content:"●"; color:green;font-size:120%}
+      #unlive{content:"●"; color:red;font-size:120%}
+      span{color: black}
+      input.btn-info {position:relative; left:20px;}
+    </style>
+
+</head>
+<body>
+    <div class="container">
+        <legend>输入设备编码</legend>
+        <form class='form' method="get" action="/manager">
+            <label class='control-label'>Terminal_ID</label>
+            <input class='input-large' type='text' name='target' id='text'>
+            <input class='btn btn-info' type='submit' value="Search">
+        </form>
+        {% if target  %}
+            {% if live %}
+                <br/>
+                <li id="live" ><span>终端 {{ target }} 已连接 ！</span></li><br/>
+                <legend>输入 SQL ：</legend>
+                <form class='form' method="post" action="/manager">
+                    <textarea name="command" cols="100" rows="10"></textarea>
+                    <input name="target" type="hidden" value={{target}}>
+                    <div><input  class='btn btn-info' type='submit' value="Execute" style="left:0px;top:20px"></div>
+                </form>
+            {% else %}
+                <br/>
+                <li id="unlive"><span>终端 {{ target }} 未连接 ！</span></li>
+            {% end %}
+        {% end %}
+    </div>
+</body>
+</html>

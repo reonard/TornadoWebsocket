@@ -27,7 +27,7 @@ class Application(tornado.web.Application):
 
     def __init__(self):
         handlers = [(r"/monitor", MonitorHandler),
-                    (r"/manager/", ManagerHandler), ]
+                    (r"/manager", ManagerHandler),]
         tornado.web.Application.__init__(self, handlers)
 
 
@@ -89,9 +89,15 @@ class MonitorHandler(tornado.websocket.WebSocketHandler):
 
 
 class ManagerHandler(tornado.web.RequestHandler):
+
+    def get(self):
+        target = self.get_argument('target', '')
+        print target, connectedClient.get(target)
+        self.render("./template/index.html", target=target, live=connectedClient.get(target))
+
     @tornado.web.asynchronous
     @tornado.gen.coroutine
-    def get(self):
+    def post(self):
         command = self.get_argument('command', ' ')
         target = self.get_argument('target', ' ')
         if command and target:
@@ -110,7 +116,7 @@ class ManagerHandler(tornado.web.RequestHandler):
                 json_cmd = json.dumps({'type': 'INQ', 'command': command, 'reqID': req_id})
                 target_terminal.write_message(json_cmd)
                 # Suspend the request and wait for terminal return in $timeout
-                result = yield tornado.gen.with_timeout(time.time() + 10, future)
+                result = yield tornado.gen.with_timeout(time.time() + 20, future)
             print "write page"
             self.write("result is %s" % result)
             self.finish()
@@ -128,5 +134,5 @@ class ManagerHandler(tornado.web.RequestHandler):
 
 if __name__ == "__main__":
     app = Application()
-    app.listen(8081)
+    app.listen(8082)
     tornado.ioloop.IOLoop.instance().start()
