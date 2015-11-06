@@ -95,6 +95,7 @@ class ManagerHandler(tornado.web.RequestHandler):
         print target, connectedClient.get(target)
         self.render("./template/index.html", target=target, live=connectedClient.get(target))
 
+
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
