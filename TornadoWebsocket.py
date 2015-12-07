@@ -11,6 +11,7 @@ import json
 import tornado.httpclient
 from tornado.concurrent import Future
 
+
 MAX_REQUEST = 50
 
 connectedClient = {}
@@ -60,15 +61,23 @@ class MonitorHandler(tornado.websocket.WebSocketHandler):
             self.tid = result
             if self.tid not in connectedClient.keys():
                 connectedClient[self.tid] = self
+            else:
+                if connectedClient[self.tid] is not self:
+                    print "Reconnected"
+                    connectedClient[self.tid] = self
+
             print ("%s is beating" % self.tid)
             self.__heartbeatRslt(result)
 
-        elif action_type == 'InqResp':
+        elif action_type in ('InqResp', 'KILLResp'):
             print resp_id, self.wait_for_resp.keys()
             if int(resp_id) in self.wait_for_resp.keys():
                 print "informing ManagePage"
                 # Async call, return result message to webPage
-                self.wait_for_resp[int(resp_id)].set_result(self.__inquiryRslt(result))
+                if action_type == 'InqResp':
+                    self.wait_for_resp[int(resp_id)].set_result(self.__inquiryRslt(result))
+                elif action_type == 'KILLResp':
+                    self.wait_for_resp[int(resp_id)].set_result(self.__killRslt(result))
                 del(self.wait_for_resp[int(resp_id)])
             print "after set result"
 
@@ -87,24 +96,25 @@ class MonitorHandler(tornado.websocket.WebSocketHandler):
     def __updateRslt(self, result_msg):
         print result_msg
 
+    def __killRslt(self, result_msg):
+        print result_msg
+        return result_msg
 
 class ManagerHandler(tornado.web.RequestHandler):
 
     def get(self):
         target = self.get_argument('target', '')
         print target, connectedClient.get(target)
-        self.render("./template/index.html", target=target, live=connectedClient.get(target))
-
+        self.render("./template/index.html", target=target, live=connectedClient.get(target), result=None,kill=0)
 
     @tornado.web.asynchronous
     @tornado.gen.coroutine
     def post(self):
         command = self.get_argument('command', ' ')
         target = self.get_argument('target', ' ')
-        if command and target:
+        cType = self.get_argument('type', ' ')
+        if cType and target:
             print target
-            self.write("%s Client is Live </br>" % len(connectedClient))
-            self.write("Process command is %s, target is %s </br>" % (command, target))
             print connectedClient.keys()
             if target in connectedClient.keys():
                 future = Future()
@@ -114,13 +124,18 @@ class ManagerHandler(tornado.web.RequestHandler):
                 req_id = self.__get_terminal_req_id(target_terminal)
                 # Handle multiple requests to the same terminal via adding request ID
                 target_terminal.wait_for_resp[req_id] = future
-                json_cmd = json.dumps({'type': 'INQ', 'command': command, 'reqID': req_id})
+                json_cmd = json.dumps({'type': cType, 'command': command, 'reqID': req_id})
                 target_terminal.write_message(json_cmd)
                 # Suspend the request and wait for terminal return in $timeout
                 result = yield tornado.gen.with_timeout(time.time() + 20, future)
             print "write page"
-            self.write("result is %s" % result)
-            self.finish()
+            print result
+            if cType == 'INQ':
+                self.render("./template/index.html", target=target, live=connectedClient.get(target), result=result, kill=0)
+            elif cType == 'KILL':
+                self.render("./template/index.html", target=target, live=connectedClient.get(target), result=None, kill=1)
+            # self.write("result is %s" % result)
+
         else:
             self.render()
 

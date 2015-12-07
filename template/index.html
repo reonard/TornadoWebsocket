@@ -19,6 +19,20 @@
     </style>
 
 </head>
+
+<script type="text/javascript">
+function inq(){
+document.getElementById("type").value="INQ";
+document.forms.inqform.submit();
+}
+
+function kill(){
+document.getElementById("type").value="KILL";
+document.forms.inqform.submit();
+}
+
+</script>
+
 <body>
     <div class="container">
         <legend>输入设备编码</legend>
@@ -32,16 +46,40 @@
                 <br/>
                 <li id="live" ><span>终端 {{ target }} 已连接 ！</span></li><br/>
                 <legend>输入 SQL ：</legend>
-                <form class='form' method="post" action="/manager">
+                <form class='form' id="inqform" method="post" action="/manager">
                     <textarea name="command" cols="100" rows="10"></textarea>
                     <input name="target" type="hidden" value={{target}}>
-                    <div><input  class='btn btn-info' type='submit' value="Execute" style="left:0px;top:20px"></div>
+                    <input name="type" id="type" type="hidden" value="INQ">
+                    <div><input  class='btn btn-info' type='submit' value="Execute" style="left:0px;top:20px" onclick="inq()">
+                        <input  class='btn btn-info' type='submit' value="重启应用" style="left:0px;top:20px" onclick="kill()">
+                        {% if kill %}
+                            已重启
+                        {% end %}
+                    </div>
                 </form>
             {% else %}
                 <br/>
                 <li id="unlive"><span>终端 {{ target }} 未连接 ！</span></li>
             {% end %}
         {% end %}
+
+        {% if result %}
+            <br/>
+            <legend>查询结果 ：</legend>
+            <table class="table table-bordered">
+                <tr> {% for col in result["headcol"] %}
+                        <td> {{col}} </td>
+                {% end %} </tr>
+            {% for row in result["data"] %}
+                <tr>{% for col in row %}
+                        <td> {{col}} </td>
+                    {% end %}
+
+                </tr>
+            {% end %}
+            </table>
+        {% end %}
+
     </div>
 </body>
 </html>

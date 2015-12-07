@@ -1,18 +1,13 @@
 __author__ = 'reonard'
 
 
+import wmi
 
+proc = wmi.WMI()
 
-def hellp():
-    a = "a"
-    if True:
-        try:
-            print "hellp"
-        except:
-            print "no hello"
-            return 0
-
-def hellow2():
+for process in proc.Win32_Process(name="QQ.exe"):
+    result = process.Terminate()
+    print result
 
 
 

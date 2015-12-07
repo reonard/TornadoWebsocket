@@ -1,11 +1,18 @@
+# -*- coding: UTF-8 -*-
+import urlparse
 import websocket
 import thread
 import time
 import json
 import MySQLdb
+import wmi
+import sys
+reload(sys)
+sys.setdefaultencoding("utf-8")
 
 COnn = 0
-
+TESTDB = ("127.0.0.1", "root", "root", "sxtcimc")
+TERNO = ""
 
 # class inquiryHandler():
 #
@@ -50,19 +57,55 @@ def heartbeatRes(wst, msg, respID):
 
 def inquiryRes(wst, msg, respID):
     print "Inquiring"
-    # time.sleep(1)
-    print msg
-    jsonResp = json.dumps({'type': 'InqResp', 'result': 'Received %s' % msg, 'respID': '%d' % respID })
-    wst.send(jsonResp)
+    respmsg={}
+    row_num = 0
+    dbConn = MySQLdb.connect(*TESTDB, charset="gb2312")
+    cursor = dbConn.cursor()
+    result_num = cursor.execute(msg)
+    rows = cursor.fetchall()
+    desc = cursor.description
+    print desc
+    row_data = []
+    data_respmsg = []
+    for col in desc:
+        row_data.append(col[0])
+    respmsg["headcol"] = row_data
 
+    for row in rows:
+        row_num += 1
+        colnum = 0
+        row_data = []
+        for col in desc:
+            print col[0]
+            row_data.append(str(row[colnum]).encode("utf-8"))
+            print row_data
+            colnum += 1
+        data_respmsg.append(row_data)
+        respmsg["data"] = data_respmsg
+
+    print respmsg
+    jsonResp = json.dumps({'type': 'InqResp', 'result': respmsg, 'respID': '%d' % respID})
+    dbConn.close()
+    wst.send(jsonResp)
 
 def updateRes(wst, msg, respID):
     print "Updating"
     print msg
 
+
+def killApp(wst, msg, respID):
+    print msg
+    proc = wmi.WMI()
+    for process in proc.Win32_Process(name="SXT.CIMC.ParcelExtractSystem.exe"):
+        result = process.Terminate()
+    jsonResp = json.dumps({'type': 'KILLResp', 'result': "Killed", 'respID': '%d' % respID})
+    wst.send(jsonResp)
+
+
 actionList = {'HB': heartbeatRes,
               'INQ': inquiryRes,
-              'UPD': updateRes}
+              'UPD': updateRes,
+              'KILL': killApp}
 
 
 def process_message(wst, json_message):
@@ -97,23 +140,30 @@ def on_open(ws):
     def run(*args):
         while True:
             print "sending"
-            terminal_no = '518000A02'
+            terminal_no = TERNO
             ws.send(json.dumps({'type': 'HB', 'result': terminal_no}))
-            time.sleep(10)
+            time.sleep(600)
         print "thread terminating..."
     thread.start_new_thread(run, ())
 
 
 if __name__ == "__main__":
     websocket.enableTrace(True)
-    # dbConn = MySQLdb.connect('localhost', 'root', 'root')
+    dbConn = MySQLdb.connect(*TESTDB,charset="gb2312")
+    cursor = dbConn.cursor()
+    cursor.execute("select terminalno from tblcimcsysver")
+    TERNO = cursor.fetchone()[0]
+    dbConn.close()
+    print TERNO
 
     while True:
         if not COnn:
-            ws = websocket.WebSocketApp("ws://localhost:8082/monitor",
+            print "Con"
+            ws = websocket.WebSocketApp("ws://103.59.216.68:6789/monitor",
                                         on_message=on_message,
                                         on_error=on_error,
                                         on_close=on_close)
+            print "After"
             ws.on_open = on_open
             ws.run_forever()
 
